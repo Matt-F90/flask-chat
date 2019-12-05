@@ -1,7 +1,9 @@
 import os
-from flask import Flask, redirect
+from datetime import datetime
+from flask import Flask, redirect, render_template, request, session
 
 app = Flask(__name__)
+app.secret_key = "randonstring123"
 messages = []
 
 
@@ -9,7 +11,8 @@ def add_messages(username, message):
     """
     add messages to the 'messages' list
     """
-    messages.append("{}: {}".format(username, message))
+    now = datetime.now().strftime("%H:%M:%S")
+    messages.append("({}) {}: {}".format(now, username, message))
 
 
 def get_all_messages():
@@ -17,12 +20,21 @@ def get_all_messages():
     return "<br>".join(messages)
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
     """
     main page with instructions
     """
-    return "To send a message use: /USERNAME/MESSAGE"
+    if request.method == "POST":
+        session["username"] = request.form["username"]
+
+    if "username" in session:
+        return redirect(session["username"])
+
+    if session:
+        session.clear()
+
+    return render_template('index.html')
 
 
 @app.route('/<username>')
